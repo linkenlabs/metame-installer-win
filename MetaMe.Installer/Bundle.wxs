@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi"
+     xmlns:bal="http://schemas.microsoft.com/wix/BalExtension"
+     xmlns:util="http://schemas.microsoft.com/wix/UtilExtension">
+  <Bundle Name="MetaMe" Version="1.0.0.0" Manufacturer="Linken Labs" UpgradeCode="1794c29a-45d0-4164-9d21-744134123493" DisableModify="yes" DisableRemove="yes">
+    <BootstrapperApplicationRef Id="WixStandardBootstrapperApplication.HyperlinkLicense" >
+      <bal:WixStandardBootstrapperApplication LicenseUrl="" SuppressOptionsUI="yes" LogoFile="icon64x64.png"/>
+    </BootstrapperApplicationRef>
+    <!--For sample see https://gist.github.com/nathancorvussolis/6852ba282647aeb0c5c00e742e28eb48
+    -->
+    <!--Look up the upgrade code here: https://stackoverflow.com/questions/35872374/detect-presence-of-vcredist-using-the-upgradecode
+    -->
+    <util:ProductSearch Id="vcredist_140_x86"
+            UpgradeCode="65E5BD06-6392-3027-8C26-853107D3CF1A"
+            Result="version"
+            Variable="vcredist_140_x86"
+            Condition="VersionNT"/>
+    <Variable Name="vcredist_140_minversion" Type="version" Value="14.0.24215" />
+    <Chain>
+      <PackageGroupRef Id="NetFx472Web"/>
+      <!--https://support.microsoft.com/en-hk/help/2977003/the-latest-supported-visual-c-downloads-->
+      <!--Install VC_redistributable-->
+      <!--Download from own repository since microsoft changes binary without warning. Original download path-->
+      <!--https://aka.ms/vs/16/release/vc_redist.x86.exe -->
+      <ExePackage
+        Id="vc_redist.x86.exe"
+        Name="Microsoft Visual C++ 2015-2019 Redistributable (x86) - 14.25.28508"
+        Cache="no"
+        Compressed="no"
+        PerMachine="yes"
+        Permanent="yes"
+        InstallCondition="VersionNT"
+        DetectCondition="vcredist_140_x86 >= vcredist_140_minversion"
+        InstallCommand="/install /quiet /norestart"
+        RepairCommand="/repair /quiet /norestart"
+        UninstallCommand="/uninstall /quiet /norestart"
+        DownloadUrl="https://github.com/zeref09/dependencies/raw/master/VC_redist.14.25.28508.x86.exe"
+        >
+        <RemotePayload 
+          CertificatePublicKey="6ADD0C9D1AC70DA3668644B1C78884E82E3F3457" 
+          CertificateThumbprint="711AF71DC4C4952C8ED65BB4BA06826ED3922A32" 
+          Description="Microsoft Visual C++ 2015-2019 Redistributable (x86) - 14.25.28508" 
+          Hash="5CE7923FFEA712468C05E7AC376DD9C29EA9F6BE" 
+          ProductName="Microsoft Visual C++ 2015-2019 Redistributable (x86) - 14.25.28508" 
+          Size="14412304" 
+          Version="14.25.28508.3" />
+      </ExePackage>
+      <!--Must be first, since .NET and VC++ may require elevated privileges, screwing up paths for this setup-->
+      <ExePackage
+        SourceFile="electron-builder-setup.exe"
+        DetectCondition="ExeDetectedVariable"
+        InstallCommand="/q /ACTION=Install"
+        RepairCommand="/q ACTION=Repair /hideconsole"
+        UninstallCommand="/q ACTION=Uninstall /hideconsole"/>
+    </Chain>
+  </Bundle>
+</Wix>
